@@ -5,6 +5,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var petWindow: PetWindow!
     private let behavior = BehaviorDriver()
     private let collapseTab = CollapseTab()
+    private let bubble = SpeechBubble()
+    private let scheduler = NotificationScheduler()
 
     private static let clickPool: [(PetAction, TimeInterval)] = [
         (.wave,   1.8),
@@ -28,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             self.petWindow.setAction(.idle)
             self.behavior.start(pet: self.petWindow)
+            self.scheduler.start(pet: self.petWindow, bubble: self.bubble)
         }
     }
 
@@ -47,6 +50,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func handleRightClick(_ event: NSEvent) {
         let menu = NSMenu()
 
+        let weather = NSMenuItem(title: "看看明天天气", action: #selector(showWeatherNow), keyEquivalent: "")
+        weather.target = self
+        menu.addItem(weather)
+
+        menu.addItem(NSMenuItem.separator())
+
         let collapse = NSMenuItem(title: "收起", action: #selector(collapse), keyEquivalent: "")
         collapse.target = self
         menu.addItem(collapse)
@@ -60,8 +69,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSMenu.popUpContextMenu(menu, with: event, for: petWindow.view)
     }
 
+    @objc private func showWeatherNow() {
+        scheduler.forceWeatherNow()
+    }
+
     @objc private func collapse() {
         behavior.suspend(for: 86_400)
+        bubble.dismiss()
         petWindow.hide()
         collapseTab.show()
     }

@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 APP_NAME="DesktopPet"
 APP_DISPLAY="桌面小机器人"
 BUNDLE_ID="com.guanlongbin.desktoppet"
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 echo "==> 编译 release 二进制"
 swift build -c release

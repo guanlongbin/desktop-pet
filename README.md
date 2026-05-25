@@ -15,9 +15,26 @@
 - **会自己动**：每隔几秒挑一个动作（挥手 / 等待 / 跳 / 跑 / 审阅），演完回到待机
 - **可拖动**：按住拖到你喜欢的位置
 - **单击互动**：点一下随机触发一个本地动作
-- **右键菜单**：收起、退出
+- **右键菜单**：收起、看看明天天气、退出
 - **收起到边缘**：右键 → 收起，会变成屏幕右下角的小竖条；点一下小竖条恢复
 - **跑动会自己撞墙转身**：贴着屏幕底边走，撞到左右边缘会反向
+- **会说话**：头顶冒磨砂玻璃气泡，文字流式逐字蹦出
+  - 每晚 20:30 来一句明天天气（自动带温度区间）
+  - 节气日早上 9 点提一下今天什么节气
+  - 周五傍晚 / 法定假期前 1~7 天来一句倒计时安慰
+  - 所有文案走 DeepSeek 实时生成，没网或没 key 时回退到本地静态文案
+
+## 配置 DeepSeek API key（可选）
+
+气泡里的话默认是 DeepSeek 实时生成的。把你的 key 放进去：
+
+```bash
+mkdir -p ~/.config/desktop-pet
+printf 'sk-你的key' > ~/.config/desktop-pet/key.txt
+chmod 600 ~/.config/desktop-pet/key.txt
+```
+
+没配 key 也能用，只是说话会变成本地写死的文案，不会有"今晚收尾早点睡"这种实时口吻。
 
 ## 安装
 
@@ -44,7 +61,7 @@ cd desktop-pet
 脚本会：
 - `swift build -c release` 编译 release 二进制
 - 在 `dist/DesktopPet.app` 组装好 .app bundle
-- 在 `dist/DesktopPet-1.0.0.dmg` 打好 DMG
+- 在 `dist/DesktopPet-1.0.2.dmg` 打好 DMG
 
 直接双击 DMG 即可安装。
 
@@ -54,8 +71,9 @@ cd desktop-pet
 |------|------|
 | 单击 | 随机做一个本地动作（挥手 / 跳 / 审阅 / 等待） |
 | 拖动 | 移动小机器人到任意位置 |
-| 右键 | 弹出菜单：收起 / 退出 |
+| 右键 | 弹出菜单：收起 / 看看明天天气 / 退出 |
 | 点击右下角小竖条 | 收起后恢复显示 |
+| 点气泡 | 立刻关掉当前气泡 |
 
 ## 系统要求
 
@@ -66,14 +84,20 @@ cd desktop-pet
 
 ```
 Sources/DesktopPet/
-├── DesktopPet.swift      # 入口
-├── AppDelegate.swift     # 生命周期、点击/右键
-├── PetWindow.swift       # 悬浮窗口 + sprite 动画
-├── BehaviorDriver.swift  # 自主行为调度
-├── CollapseTab.swift     # 收起到边缘的小竖条
+├── DesktopPet.swift           # 入口
+├── AppDelegate.swift          # 生命周期、点击/右键、装配 scheduler+bubble
+├── PetWindow.swift            # 悬浮窗口 + sprite 动画
+├── BehaviorDriver.swift       # 自主行为调度
+├── CollapseTab.swift          # 收起到边缘的小竖条
+├── SpeechBubble.swift         # 头顶气泡(磨砂玻璃 + 流式追加 + 思考动画)
+├── NotificationScheduler.swift# 每分钟巡检：天气/节气/倒计时
+├── DeepSeekClient.swift       # DeepSeek SSE 流式客户端
+├── WeatherService.swift       # 明天天气拉取
+├── SolarTerm.swift            # 二十四节气
+├── Countdown.swift            # 周末/法定假期倒计时
 └── Resources/
-    ├── xiao-ikun.png     # sprite sheet
-    └── xiao-ikun.json    # 帧描述
+    ├── xiao-ikun.png          # sprite sheet
+    └── xiao-ikun.json         # 帧描述
 ```
 
 ## 致谢
