@@ -80,8 +80,10 @@ final class PetView: NSView {
     var onDoubleClick: (() -> Void)?
     var onRightClick: ((NSEvent) -> Void)?
 
-    private var dragStart: NSPoint?
-    private var windowStartOrigin: NSPoint?
+    /// 鼠标按下瞬间,鼠标在屏幕上的全局坐标
+    private var dragMouseStartScreen: NSPoint?
+    /// 鼠标按下瞬间,窗口左下角在屏幕上的位置
+    private var dragWindowStartOrigin: NSPoint?
     private var didDrag = false
     private static let dragThreshold: CGFloat = 3
 
@@ -233,18 +235,23 @@ final class PetView: NSView {
     // MARK: - 鼠标处理
 
     override func mouseDown(with event: NSEvent) {
-        dragStart = event.locationInWindow
-        windowStartOrigin = window?.frame.origin
+        // 用屏幕全局坐标系跟踪拖动:event.locationInWindow 在窗口移动后参考系会变,
+        // 导致经典的来回抖动。NSEvent.mouseLocation 始终是屏幕坐标,稳定。
+        dragMouseStartScreen = NSEvent.mouseLocation
+        dragWindowStartOrigin = window?.frame.origin
         didDrag = false
     }
 
     override func mouseDragged(with event: NSEvent) {
-        guard let start = dragStart, let origin = windowStartOrigin, let win = window else { return }
-        let dx = event.locationInWindow.x - start.x
-        let dy = event.locationInWindow.y - start.y
+        guard let mouseStart = dragMouseStartScreen,
+              let originStart = dragWindowStartOrigin,
+              let win = window else { return }
+        let now = NSEvent.mouseLocation
+        let dx = now.x - mouseStart.x
+        let dy = now.y - mouseStart.y
         if !didDrag && abs(dx) <= Self.dragThreshold && abs(dy) <= Self.dragThreshold { return }
         didDrag = true
-        win.setFrameOrigin(NSPoint(x: origin.x + dx, y: origin.y + dy))
+        win.setFrameOrigin(NSPoint(x: originStart.x + dx, y: originStart.y + dy))
     }
 
     override func mouseUp(with event: NSEvent) {
@@ -255,8 +262,8 @@ final class PetView: NSView {
                 onClick?()
             }
         }
-        dragStart = nil
-        windowStartOrigin = nil
+        dragMouseStartScreen = nil
+        dragWindowStartOrigin = nil
     }
 
     override func rightMouseDown(with event: NSEvent) {
